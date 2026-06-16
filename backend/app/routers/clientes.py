@@ -1,79 +1,68 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response, status
+
 from app.database import clientes
-from app.models.cliente import Cliente
-from bson import ObjectId
+from app.models.cliente import Cliente, ClienteCreate, ClienteUpdate
+from app.utils import get_object_id, serialize_document, serialize_documents
 
 router = APIRouter(prefix="/clientes", tags=["Clientes"])
 
-@router.post("/")
-def criar_cliente(cliente: Cliente):
 
-    resultado = clientes.insert_one(cliente.dict())
-
-    return {
-        "id": str(resultado.inserted_id),
-        "message": "Cliente criado com sucesso!"
-    }
-
-@router.get("/")
+@router.get("/", response_model=list[Cliente])
 def listar_clientes():
+    return serialize_documents(clientes.find())
 
-    lista= []
 
-    for cliente in clientes.find():
-        cliente["_id"] = str(cliente["_id"])
-        lista.append(cliente)
-
-    return lista
-
-@router.get("/{id}")
+@router.get("/{id}", response_model=Cliente)
 def buscar_cliente(id: str):
+    cliente = serialize_document(clientes.find_one({"_id": get_object_id(id)}))
 
-    cliente = clientes.find_one({
-        "_id": ObjectId(id)
-    })
-
-    if not cliente:
+    if cliente is None:
         raise HTTPException(
-            status_code=404,
-            detail="Cliente não encontrado"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cliente não encontrado",
         )
-
-    cliente["_id"] = str(cliente["_id"])
 
     return cliente
 
-@router.put("/{id}")
-def atualizar_cliente(id: str, cliente: Cliente):
 
-    resultado = clientes.update_one(
-        {"_id": ObjectId(id)},
-        {"$set": cliente.dict()}
-    )
+@router.post("/", response_model=Cliente, status_code=status.HTTP_201_CREATED)
+def criar_cliente(cliente: ClienteCreate):
+    result = clientes.insert_one(cliente.model_dump())
+    novo_cliente = clientes.find_one({"_id": result.inserted_id})
+    return serialize_document(novo_cliente)
 
-    if resultado.matched_count == 0:
+
+@router.put("/{id}", response_model=Cliente)
+def atualizar_cliente(id: str, cliente: ClienteUpdate):
+    dados = cliente.model_dump(exclude_unset=True)
+
+    if not dados:
         raise HTTPException(
-            status_code=404,
-            detail="Cliente não encontrado"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Nenhum dado enviado para atualização",
         )
 
-    return {
-        "message": "Cliente atualizado com sucesso!"
-    }
+    result = clientes.update_one({"_id": get_object_id(id)}, {"$set": dados})
 
-@router.delete("/{id}")
+    if result.matched_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cliente não encontrado",
+        )
+
+    cliente_atualizado = clientes.find_one({"_id": get_object_id(id)})
+    return serialize_document(cliente_atualizado)
+
+
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def deletar_cliente(id: str):
+    result = clientes.delete_one({"_id": get_object_id(id)})
 
-    resultado = clientes.delete_one(
-        {"_id": ObjectId(id)}
-    )
-
-    if resultado.deleted_count == 0:
+    if result.deleted_count == 0:
         raise HTTPException(
-            status_code=404,
-            detail="Cliente não encontrado"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cliente não encontrado",
         )
 
-    return {
-        "message": "Cliente removido com sucesso!"
-    }
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+

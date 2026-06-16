@@ -1,78 +1,68 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response, status
+
 from app.database import pedidos
-from app.models.pedido import Pedido
-from bson import ObjectId
+from app.models.pedido import Pedido, PedidoCreate, PedidoUpdate
+from app.utils import get_object_id, serialize_document, serialize_documents
 
-router= APIRouter(prefix="/pedidos", tags=["Pedidos"])
+router = APIRouter(prefix="/pedidos", tags=["Pedidos"])
 
-@router.post("/")
-def criar_pedido(pedido: Pedido):
 
-    resultado = pedidos.insert_one(pedido.dict())
-
-    return {
-        "id": str(resultado.inserted_id)
-    }
-
-@router.get("/")
+@router.get("/", response_model=list[Pedido])
 def listar_pedidos():
+    return serialize_documents(pedidos.find())
 
-    lista = []
 
-    for pedido in pedidos.find():
-        pedido["_id"] = str(pedido["_id"])
-        lista.append(pedido)
-
-    return lista
-
-@router.get("/{id}")
+@router.get("/{id}", response_model=Pedido)
 def buscar_pedido(id: str):
+    pedido = serialize_document(pedidos.find_one({"_id": get_object_id(id)}))
 
-    pedido = pedidos.find_one({
-        "_id": ObjectId(id)
-    })
-
-    if not pedido:
+    if pedido is None:
         raise HTTPException(
-            status_code=404,
-            detail="Pedido não encontrado"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pedido não encontrado",
         )
-
-    pedido["_id"] = str(pedido["_id"])
 
     return pedido
 
-@router.put("/{id}")
-def atualizar_pedido(id: str, pedido: Pedido):
 
-    resultado = pedidos.update_one(
-        {"_id": ObjectId(id)},
-        {"$set": pedido.dict()}
-    )
+@router.post("/", response_model=Pedido, status_code=status.HTTP_201_CREATED)
+def criar_pedido(pedido: PedidoCreate):
+    result = pedidos.insert_one(pedido.model_dump())
+    novo_pedido = pedidos.find_one({"_id": result.inserted_id})
+    return serialize_document(novo_pedido)
 
-    if resultado.matched_count == 0:
+
+@router.put("/{id}", response_model=Pedido)
+def atualizar_pedido(id: str, pedido: PedidoUpdate):
+    dados = pedido.model_dump(exclude_unset=True)
+
+    if not dados:
         raise HTTPException(
-            status_code=404,
-            detail="Pedido não encontrado"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Nenhum dado enviado para atualização",
         )
 
-    return {
-        "message": "Pedido atualizado com sucesso!"
-    }
+    result = pedidos.update_one({"_id": get_object_id(id)}, {"$set": dados})
 
-@router.delete("/{id}")
+    if result.matched_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pedido não encontrado",
+        )
+
+    pedido_atualizado = pedidos.find_one({"_id": get_object_id(id)})
+    return serialize_document(pedido_atualizado)
+
+
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def deletar_pedido(id: str):
+    result = pedidos.delete_one({"_id": get_object_id(id)})
 
-    resultado = pedidos.delete_one(
-        {"_id": ObjectId(id)}
-    )
-
-    if resultado.deleted_count == 0:
+    if result.deleted_count == 0:
         raise HTTPException(
-            status_code=404,
-            detail="Pedido não encontrado"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pedido não encontrado",
         )
 
-    return {
-        "message": "Pedido removido com sucesso!"
-    }
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
