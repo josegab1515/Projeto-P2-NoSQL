@@ -6,9 +6,9 @@ import { CATEGORIES, PRODUCTS, type Category } from "@/lib/products";
 export const Route = createFileRoute("/cardapio")({
   head: () => ({
     meta: [
-      { title: "Cardápio do dia · Padaria Dom Quixote" },
-      { name: "description", content: "O que saiu do forno hoje: pães de fermentação natural, doces de receita antiga e bebidas artesanais." },
-      { property: "og:title", content: "Cardápio do dia · Padaria Dom Quixote" },
+      { title: "Cardápio do dia · Padaria Dona Margarida" },
+      { name: "description", content: "O que saiu do forno hoje: pães de fermentação natural, doces de receita familiar e bebidas artesanais." },
+      { property: "og:title", content: "Cardápio do dia · Padaria Dona Margarida" },
       { property: "og:description", content: "Pães, doces e bebidas frescos do dia." },
     ],
   }),
@@ -33,12 +33,12 @@ function CardapioPage() {
     <div className="animate-fade-up mx-auto max-w-7xl px-5 py-12 lg:py-16">
       <div className="text-center max-w-2xl mx-auto">
         <div className="inline-flex items-center gap-2 rounded-full bg-bread/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-bread font-bold">
-          Fornada de hoje
+          Cardápio
         </div>
         <h1 className="mt-4 font-serif text-4xl md:text-5xl font-bold text-bread">
-          O Que Temos De Melhor Hoje
+          Os Melhores de Hoje
         </h1>
-        <p className="mt-3 text-foreground/70">Tudo assado entre as 4h e as 11h da manhã. Quando acaba, acabou.</p>
+        <p className="mt-3 text-foreground/70"></p>
       </div>
 
       {/* Filtros */}

@@ -7,7 +7,7 @@ import { formatBRL } from "@/lib/products";
 export const Route = createFileRoute("/carrinho")({
   head: () => ({
     meta: [
-      { title: "Seu carrinho · Padaria Dom Quixote" },
+      { title: "Seu carrinho · Padaria Dona Margarida" },
       { name: "description", content: "Revise seus pães, doces e bebidas antes de fechar o pedido." },
     ],
   }),

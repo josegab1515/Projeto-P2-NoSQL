@@ -12,7 +12,7 @@ export const Route = createFileRoute("/pedido-confirmado")({
   validateSearch: search.parse,
   head: () => ({
     meta: [
-      { title: "Pedido confirmado · Padaria Dom Quixote" },
+      { title: "Pedido confirmado · Padaria Dona Margarida" },
       { name: "description", content: "Recebemos seu pedido com carinho." },
     ],
   }),
@@ -31,7 +31,7 @@ function ConfirmadoPage() {
       </div>
       <h1 className="mt-8 font-serif text-4xl md:text-5xl font-bold text-bread">Uhul! Seu pedido está a caminho!</h1>
       <p className="mt-4 text-foreground/75 max-w-md mx-auto">
-        Recebemos seu pedido com carinho e já estamos embalando tudo. Enviamos uma confirmação no seu e-mail.
+        Recebemos seu pedido com carinho e já estamos embalando tudo.
       </p>
 
       <div className="mt-10 paper-texture rounded-2xl border border-border p-6 text-left">

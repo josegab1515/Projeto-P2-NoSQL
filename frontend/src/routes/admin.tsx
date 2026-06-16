@@ -9,7 +9,7 @@ const STOCK_KEY = "dq-admin-stock";
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Gestão · Padaria Dom Quixote" },
+      { title: "Gestão · Padaria Dona Margarida" },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),
@@ -42,7 +42,7 @@ function Login({ onOk }: { onOk: () => void }) {
           <Wheat size={22} /> <span className="font-serif text-xl font-bold">Portal de Funcionários</span>
         </div>
         <h1 className="mt-6 text-2xl font-bold text-slate-900">Entrar</h1>
-        <p className="text-sm text-slate-500 mt-1">Acesso restrito · Dom Quixote</p>
+        <p className="text-sm text-slate-500 mt-1">Acesso restrito · Dona Margarida</p>
         <div className="mt-6 space-y-3">
           <label className="block">
             <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Usuário</span>
@@ -116,7 +116,7 @@ function Panel({ onLogout }: { onLogout: () => void }) {
         <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-bread min-w-0">
             <Wheat size={20} className="shrink-0" />
-            <span className="font-serif font-bold truncate">Gestão de Produtos · Dom Quixote</span>
+            <span className="font-serif font-bold truncate">Gestão de Produtos · Dona Margarida</span>
           </div>
           <div className="flex items-center gap-2">
             <Link to="/" className="text-xs text-slate-500 hover:text-blue-600 hidden sm:inline">Ver loja</Link>

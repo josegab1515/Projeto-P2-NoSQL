@@ -12,8 +12,8 @@ export function Header() {
             <Wheat size={20} />
           </span>
           <div className="min-w-0 leading-tight">
-            <div className="font-serif text-lg font-bold text-bread truncate">Padaria Dom Quixote</div>
-            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Artesanal · desde 1987</div>
+            <div className="font-serif text-lg font-bold text-bread truncate">Padaria Dona Margarida</div>
+            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Artesanal · desde 1948</div>
           </div>
         </Link>
 
@@ -24,9 +24,8 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-1 justify-self-end">
-          <button aria-label="Pesquisar" className="grid h-10 w-10 place-items-center rounded-full hover:bg-muted transition-colors">
-            <Search size={18} />
-          </button>
+
+   
           <button aria-label="Conta" className="grid h-10 w-10 place-items-center rounded-full hover:bg-muted transition-colors">
             <User size={18} />
           </button>
