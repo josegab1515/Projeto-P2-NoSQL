@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import funcionarios, produtos, clientes, pedidos
+from app.routers import auth, funcionarios, produtos, clientes, pedidos
 
 app = FastAPI(
     title="Dom Quixote Padaria API",
@@ -18,6 +18,7 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://127.0.0.1:4200",
         "http://127.0.0.1:5173",
+        "http://localhost:8080",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -30,7 +31,8 @@ def health_check():
     return {"status": "ok", "message": "API Dom Quixote Padaria"}
 
 
-app.include_router(produtos.router)
+app.include_router(auth.router)
 app.include_router(funcionarios.router)
+app.include_router(produtos.router)
 app.include_router(clientes.router)
 app.include_router(pedidos.router)

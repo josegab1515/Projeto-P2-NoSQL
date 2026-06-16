@@ -3,10 +3,10 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ProdutoBase(BaseModel):
     nome: str
-    preco: str
+    preco: float
     descricao: str
     categoria: str
-    estoque: str
+    estoque: int
     imagem: str
 
 
@@ -16,10 +16,10 @@ class ProdutoCreate(ProdutoBase):
 
 class ProdutoUpdate(BaseModel):
     nome: str | None = None
-    preco: str | None = None
+    preco: float | None = None
     descricao: str | None = None
     categoria: str | None = None
-    estoque: str | None = None
+    estoque: int | None = None
     imagem: str | None = None
 
 

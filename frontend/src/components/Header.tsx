@@ -27,9 +27,13 @@ export function Header() {
           <button aria-label="Pesquisar" className="grid h-10 w-10 place-items-center rounded-full hover:bg-muted transition-colors">
             <Search size={18} />
           </button>
-          <button aria-label="Conta" className="grid h-10 w-10 place-items-center rounded-full hover:bg-muted transition-colors">
+          <Link 
+            to="/admin" 
+            aria-label="Conta" 
+            className="relative grid h-10 w-10 place-items-center rounded-full hover:bg-muted transition-colors"
+          >
             <User size={18} />
-          </button>
+          </Link>
           <Link to="/carrinho" aria-label="Carrinho" className="relative grid h-10 w-10 place-items-center rounded-full hover:bg-muted transition-colors">
             <ShoppingBag size={18} />
             {count > 0 && (

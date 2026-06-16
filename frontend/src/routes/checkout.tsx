@@ -3,6 +3,8 @@ import { useState, type FormEvent } from "react";
 import { CreditCard, QrCode, Banknote, X, Lock } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { formatBRL } from "@/lib/products";
+import { apiService } from "@/services/api";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -17,12 +19,24 @@ export const Route = createFileRoute("/checkout")({
 type PayMethod = "credito" | "pix" | "dinheiro";
 
 function CheckoutPage() {
-  const { detailed, subtotal, clear } = useCart();
+  const { detailed, clear } = useCart();
   const navigate = useNavigate();
   const [method, setMethod] = useState<PayMethod>("credito");
   const [submitting, setSubmitting] = useState(false);
-  const frete = subtotal > 0 ? 8.9 : 0;
-  const total = subtotal + frete;
+
+  // Estados dos dados pessoais coletados do formulário
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [cep, setCep] = useState("");
+  const [endereco, setEndereco] = useState("");
+  const [bairro, setBairro] = useState("");
+  const [complemento, setComplemento] = useState("");
+
+  // Recupera as informações financeiras e itens calculados no carrinho
+  const resumoSalvo = localStorage.getItem("dom_quixote_checkout_resumo");
+  const checkoutData = resumoSalvo ? JSON.parse(resumoSalvo) : { itens: [], total: 0 };
+  const total = checkoutData.total;
 
   if (!detailed.length) {
     return (
@@ -35,14 +49,52 @@ function CheckoutPage() {
     );
   }
 
-  const onSubmit = (e: FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setTimeout(() => {
-      const numero = `DQ-${Math.floor(Math.random() * 9000 + 1000)}`;
+
+    try {
+      // 1. Cadastra o Cliente no banco de dados MongoDB
+      const clienteCriado = await apiService.criarCliente({
+        nome,
+        email,
+        telefone,
+        cep,
+        endereco, // mapeado para "Rua e número" do seu input
+        bairro,
+        complemento: complemento || "Nenhum",
+      });
+
+      // 2. Monta o Payload do Pedido com o ID do cliente retornado pelo backend
+      const payloadPedido = {
+        cliente_id: clienteCriado._id, // O ID real gerado pelo Mongo
+        itens: checkoutData.itens,     // Array estruturado contendo { produto_id, quantidade, preco_unitario }
+        total: total,
+        pagamento: method,             // "credito" | "pix" | "dinheiro"
+        status: "pendente",
+      };
+
+      // 3. Envia o Pedido para a API
+      const pedidoConfirmado = await apiService.criarPedido(payloadPedido);
+
+      // Limpa estados e storages locais
       clear();
-      navigate({ to: "/pedido-confirmado", search: { numero, total } });
-    }, 800);
+      localStorage.removeItem("dom_quixote_checkout_resumo");
+
+      toast.success("Pedido realizado com sucesso!", { description: "Sua fornada já vai começar a ser separada!" });
+      
+      // Redireciona passando os parâmetros para a tela de confirmação
+      navigate({ 
+        to: "/pedido-confirmado", 
+        search: { numero: pedidoConfirmado._id.slice(-6).toUpperCase(), total } 
+      });
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro no processamento", { description: "Não conseguimos enviar o pedido à cozinha. Tente novamente." });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -51,7 +103,7 @@ function CheckoutPage() {
         onSubmit={onSubmit}
         className="mx-auto max-w-5xl bg-background rounded-3xl shadow-2xl overflow-hidden grid lg:grid-cols-[1.2fr_1fr]"
       >
-        {/* Esquerda - dados */}
+        {/* Esquerda - Dados do formulário */}
         <div className="p-7 lg:p-10">
           <div className="flex items-center justify-between">
             <div>
@@ -66,20 +118,20 @@ function CheckoutPage() {
           <fieldset className="mt-8 space-y-4">
             <legend className="font-serif text-lg font-semibold text-bread mb-2">Dados pessoais</legend>
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Nome completo" required placeholder="Como assina a entrega" />
-              <Field label="E-mail" required type="email" placeholder="voce@email.com" />
-              <Field label="Telefone" required placeholder="(11) 9 0000-0000" />
-              <Field label="CEP" required placeholder="00000-000" />
+              <Field label="Nome completo" required value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Como assina a entrega" />
+              <Field label="E-mail" required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" />
+              <Field label="Telefone" required value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(11) 9 0000-0000" />
+              <Field label="CEP" required value={cep} onChange={(e) => setCep(e.target.value)} placeholder="00000-000" />
             </div>
-            <Field label="Rua e número" required placeholder="Rua das Espigas, 142" />
+            <Field label="Rua e número" required value={endereco} onChange={(e) => setEndereco(e.target.value)} placeholder="Rua das Espigas, 142" />
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Bairro" required placeholder="Vila do Forno" />
-              <Field label="Complemento" placeholder="Apto, casa..." />
+              <Field label="Bairro" required value={bairro} onChange={(e) => setBairro(e.target.value)} placeholder="Vila do Forno" />
+              <Field label="Complemento" value={complemento} onChange={(e) => setComplemento(e.target.value)} placeholder="Apto, casa..." />
             </div>
           </fieldset>
         </div>
 
-        {/* Direita - métodos */}
+        {/* Direita - Métodos de Pagamento */}
         <div className="paper-texture p-7 lg:p-10 border-t lg:border-t-0 lg:border-l border-border">
           <h3 className="font-serif text-xl font-bold text-bread">Escolha como Pagar</h3>
           <div className="mt-5 space-y-3">
@@ -119,7 +171,7 @@ function CheckoutPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="mt-5 w-full rounded-xl btn-bakery px-6 py-4 text-sm font-bold uppercase tracking-[0.15em] disabled:opacity-60"
+            className="mt-5 w-full rounded-xl btn-bakery px-6 py-4 text-sm font-bold uppercase tracking-[0.15em] disabled:opacity-60 transition-colors"
           >
             {submitting ? "Processando..." : "Confirmar Pagamento"}
           </button>
