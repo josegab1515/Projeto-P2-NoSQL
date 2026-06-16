@@ -2,20 +2,20 @@
 
 API desenvolvida com FastAPI e MongoDB para o gerenciamento da Padaria DQ.
 
-## ?? Tecnologias
+## Tecnologias
 - [FastAPI](https://fastapi.tiangolo.com/)
 - [MongoDB Atlas](https://www.mongodb.com/atlas/database)
 - [Pydantic v2](https://docs.pydantic.dev/latest/)
 - [Uvicorn](https://www.uvicorn.org/)
 
-## ??? Instala��o e Execu��o
+## Instalação e Execução
 
-1. **Instalar depend�ncias:**
+1. **Instalar dependências:**
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Configurar Vari�veis de Ambiente:**
+2. **Configurar Variáveis de Ambiente:**
    Crie um arquivo \`.env\` na pasta \`backend\` com:
    ```env
    MONGO_URI=sua_uri_do_mongodb
@@ -29,34 +29,34 @@ API desenvolvida com FastAPI e MongoDB para o gerenciamento da Padaria DQ.
 
 ## ?? Endpoints Principais
 
-A documenta��o interativa completa (Swagger) est� dispon�vel em:
+A documentação interativa completa (Swagger) está disponível em:
 [http://localhost:8000/docs](http://localhost:8000/docs)
 
-### ?? Clientes (`/clientes`)
+### Clientes (`/clientes`)
 - `GET /`: Lista todos os clientes.
 - `POST /`: Cadastra um novo cliente.
 - `GET /{id}`: Busca cliente por ID.
 - `PUT /{id}`: Atualiza dados do cliente.
 - `DELETE /{id}`: Remove um cliente.
 
-### ?? Pedidos (`/pedidos`)
+### Pedidos (`/pedidos`)
 - `GET /`: Lista todos os pedidos.
 - `POST /`: Registra um novo pedido.
-- `GET /{id}`: Detalhes de um pedido espec�fico.
+- `GET /{id}`: Detalhes de um pedido específico.
 - `PUT /{id}`: Atualiza status ou dados do pedido.
 - `DELETE /{id}`: Cancela/Remove um pedido.
 
-### ?? Produtos (`/produtos`)
+### Produtos (`/produtos`)
 - `GET /`: Lista todos os produtos.
 - `POST /`: Cadastra um novo produto.
 - `GET /{produto_id}`: Busca produto por ID.
 - `PUT /{produto_id}`: Atualiza dados do produto.
 - `DELETE /{produto_id}`: Remove um produto.
 
-### ?? Funcion�rios (`/funcionarios`)
-- `GET /`: Lista todos os funcion�rios.
-- `POST /`: Cadastra um novo funcion�rio.
-- `GET /{funcionario_id}`: Busca funcion�rio por ID.
-- `PUT /{funcionario_id}`: Atualiza dados do funcion�rio.
-- `DELETE /{funcionario_id}`: Remove um funcion�rio.
+### Funcionários (`/funcionarios`)
+- `GET /`: Lista todos os funcionários.
+- `POST /`: Cadastra um novo funcionário.
+- `GET /{funcionario_id}`: Busca funcionário por ID.
+- `PUT /{funcionario_id}`: Atualiza dados do funcionário.
+- `DELETE /{funcionario_id}`: Remove um funcionário.
 
