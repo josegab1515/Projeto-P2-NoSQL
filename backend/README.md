@@ -27,7 +27,7 @@ API desenvolvida com FastAPI e MongoDB para o gerenciamento da Padaria DQ.
    uvicorn app.main:app --reload
    ```
 
-## ?? Endpoints Principais
+## Endpoints Principais
 
 A documentação interativa completa (Swagger) está disponível em:
 [http://localhost:8000/docs](http://localhost:8000/docs)
