@@ -16,7 +16,7 @@ export const Route = createFileRoute("/checkout")({
   component: CheckoutPage,
 });
 
-type PayMethod = "credito" | "pix" | "dinheiro";
+type PayMethod = "credito" | "dinheiro";
 
 function CheckoutPage() {
   const { detailed, clear } = useCart();
@@ -70,7 +70,7 @@ function CheckoutPage() {
         cliente_id: clienteCriado._id, // O ID real gerado pelo Mongo
         itens: checkoutData.itens,     // Array estruturado contendo { produto_id, quantidade, preco_unitario }
         total: total,
-        pagamento: method,             // "credito" | "pix" | "dinheiro"
+        pagamento: method,             // "credito" | "dinheiro"
         status: "pendente",
       };
 
@@ -120,7 +120,7 @@ function CheckoutPage() {
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Nome completo" required value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Como assina a entrega" />
               <Field label="E-mail" required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" />
-              <Field label="Telefone" required value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(11) 9 0000-0000" />
+              <Field label="Telefone" required value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(14) 9 0000-0000" />
               <Field label="CEP" required value={cep} onChange={(e) => setCep(e.target.value)} placeholder="00000-000" />
             </div>
             <Field label="Rua e número" required value={endereco} onChange={(e) => setEndereco(e.target.value)} placeholder="Rua das Espigas, 142" />
@@ -136,7 +136,6 @@ function CheckoutPage() {
           <h3 className="font-serif text-xl font-bold text-bread">Escolha como Pagar</h3>
           <div className="mt-5 space-y-3">
             <PayOption icon={<CreditCard size={18} />} label="Cartão de Crédito" hint="Visa, Master, Elo" value="credito" active={method === "credito"} onChange={setMethod} />
-            <PayOption icon={<QrCode size={18} />} label="Pix" hint="Aprovação imediata · 5% off" value="pix" active={method === "pix"} onChange={setMethod} />
             <PayOption icon={<Banknote size={18} />} label="Débito ou Dinheiro na entrega" hint="Pagamento na porta" value="dinheiro" active={method === "dinheiro"} onChange={setMethod} />
           </div>
 
@@ -147,14 +146,6 @@ function CheckoutPage() {
                 <Field label="Validade" required placeholder="MM/AA" />
                 <Field label="CVV" required placeholder="123" />
               </div>
-            </div>
-          )}
-          {method === "pix" && (
-            <div className="mt-5 rounded-xl border border-border bg-card p-5 text-center animate-fade-up">
-              <div className="mx-auto grid h-32 w-32 place-items-center rounded-xl bg-foreground text-background">
-                <QrCode size={84} />
-              </div>
-              <p className="mt-3 text-sm text-muted-foreground">QR code dinâmico será gerado ao confirmar.</p>
             </div>
           )}
           {method === "dinheiro" && (
@@ -176,7 +167,7 @@ function CheckoutPage() {
             {submitting ? "Processando..." : "Confirmar Pagamento"}
           </button>
           <p className="mt-3 flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
-            <Lock size={12} /> Pagamento criptografado · seus dados ficam com você
+            <Lock size={12} /> Pagamento criptografado · Seus dados ficam com você
           </p>
         </div>
       </form>

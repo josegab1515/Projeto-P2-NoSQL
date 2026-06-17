@@ -5,9 +5,9 @@ import { ArrowRight, Wheat, Clock, Heart } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Padaria Dona Margarida · Pão artesanal de fermentação natural" },
+      { title: "Padaria Dom Quixote · Pão artesanal de fermentação natural" },
       { name: "description", content: "Há três gerações fazendo pão com muito carinho " },
-      { property: "og:title", content: "Padaria Dona Margarida" },
+      { property: "og:title", content: "Padaria Dom Quixote" },
       { property: "og:description", content: "Pão de fermentação natural, doces de receita familiar e cafés artesanais." },
     ],
   }),
@@ -44,7 +44,7 @@ function HomePage() {
               O pão <em className="not-italic text-primary">nosso</em> de cada dia.
             </h1>
             <p className="mt-6 text-base md:text-lg leading-relaxed text-foreground/80">
-               Desde 1948, levamos sabor, tradição e carinho para a mesa de nossos clientes. Fundada por Dona Margarida e sua família, 
+               Desde 1948, levamos sabor, tradição e carinho para a mesa de nossos clientes. Fundada por Dom Quixote e sua família, 
                nossa padaria atravessou gerações mantendo a qualidade dos ingredientes e o 
               <strong className="text-bread"> amor</strong> em cada receita. Aqui, cada pão quentinho é preparado para transformar momentos simples em lembranças especiais.
             </p>
@@ -72,7 +72,7 @@ function HomePage() {
           {[
             { t: "Delícia caseira", d: "Muito carinho e história." },
             { t: "Entrega quentinha", d: "Saiu do forno, partiu pra você." },
-            { t: "Receita de família", d: "O caderno da Dona Margarida ainda dita o ponto da massa." },
+            { t: "Receita de família", d: "O caderno de Dom Quixote ainda dita o ponto da massa." },
           ].map((b) => (
             <div key={b.t}>
               <h3 className="font-serif text-xl font-bold text-bread">{b.t}</h3>

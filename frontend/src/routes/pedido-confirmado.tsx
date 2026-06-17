@@ -12,7 +12,7 @@ export const Route = createFileRoute("/pedido-confirmado")({
   validateSearch: search.parse,
   head: () => ({
     meta: [
-      { title: "Pedido confirmado · Padaria Dona Margarida" },
+      { title: "Pedido confirmado · Padaria Dom Quixote" },
       { name: "description", content: "Recebemos seu pedido com carinho." },
     ],
   }),

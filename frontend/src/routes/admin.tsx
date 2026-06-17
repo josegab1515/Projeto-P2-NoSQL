@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { LogOut, Plus, Wheat, ShoppingBag, Users, Trash2 } from "lucide-react";
+import { LogOut, Plus, Wheat, ShoppingBag, Users, Trash2, Pencil } from "lucide-react";
 import { formatBRL, type Category } from "@/lib/products";
 import { apiService, type APIProduct, type APIProductCreate, type APIFuncionario, type APIFuncionarioCreate } from "../services/api";
 
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-export function AdminPage() {
+function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -57,7 +57,6 @@ function Login({ onOk }: { onOk: () => void }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🚀 CORRIGIDO: Agora valida de verdade contra a API e o MongoDB
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
@@ -68,11 +67,9 @@ function Login({ onOk }: { onOk: () => void }) {
     const passVal = String(fd.get("pass") || "");
 
     try {
-      // Faz o POST dinâmico para o back-end buscando as credenciais
       await apiService.login(userVal, passVal);
       onOk();
     } catch (err: any) {
-      // Trata mensagens de erro que vêm do FastAPI (como 'Usuário ou senha incorretos')
       setError(err.message || "Erro ao tentar realizar o login.");
     } finally {
       setLoading(false);
@@ -130,6 +127,7 @@ function Panel({ onLogout }: { onLogout: () => void }) {
   const [loading, setLoading] = useState(true);
 
   const [showNewProduct, setShowNewProduct] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<APIProduct | null>(null);
   const [showNewFunc, setShowNewFunc] = useState(false);
 
   const navigate = useNavigate();
@@ -182,11 +180,12 @@ function Panel({ onLogout }: { onLogout: () => void }) {
     }
   };
 
-  const handleAddProduct = async (e: FormEvent<HTMLFormElement>) => {
+  // 🚀 UNIFICADO: Gerencia tanto a criação quanto a edição completa do produto
+  const handleSaveProduct = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
 
-    const novoProdutoPayload: APIProductCreate = {
+    const produtoPayload: APIProductCreate = {
       nome: String(fd.get("name") || ""),
       preco: String(fd.get("price") || "0"),
       descricao: String(fd.get("description") || ""),
@@ -196,12 +195,25 @@ function Panel({ onLogout }: { onLogout: () => void }) {
     };
 
     try {
-      await apiService.criarProduto(novoProdutoPayload);
-      setShowNewProduct(false);
-      navigate({ to: "/cardapio" });
+      if (editingProduct) {
+        // Modo Edição
+        const atualizado = await apiService.atualizarProduto(editingProduct._id, produtoPayload);
+        setProducts((cur) => cur.map((p) => (p._id === editingProduct._id ? atualizado : p)));
+        setEditingProduct(null);
+      } else {
+        // Modo Criação
+        await apiService.criarProduto(produtoPayload);
+        setShowNewProduct(false);
+        navigate({ to: "/cardapio" });
+      }
     } catch (err) {
-      alert("Não foi possível salvar o produto.");
+      alert("Não foi possível salvar as alterações do produto.");
     }
+  };
+
+  const handleStartEdit = (produto: APIProduct) => {
+    setShowNewProduct(false); // Fecha o form de criação se estiver aberto
+    setEditingProduct(produto); // Define o produto ativo na edição
   };
 
   const handleAddFuncionario = async (e: FormEvent<HTMLFormElement>) => {
@@ -279,32 +291,48 @@ function Panel({ onLogout }: { onLogout: () => void }) {
 
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-slate-900">Catálogo de Cardápio</h2>
-              <button onClick={() => setShowNewProduct((v) => !v)} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-semibold hover:bg-slate-800">
+              <button 
+                onClick={() => { setEditingProduct(null); setShowNewProduct((v) => !v); }} 
+                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-semibold hover:bg-slate-800"
+              >
                 <Plus size={14} /> Novo produto
               </button>
             </div>
 
-            {showNewProduct && (
-              <form onSubmit={handleAddProduct} className="mb-6 rounded-xl border border-slate-200 bg-white p-5 grid sm:grid-cols-2 gap-3 animate-fade-up">
-                <AField name="name" label="Nome" required />
-                <AField name="price" label="Preço (R$)" type="number" step="0.01" required />
-                <AField name="description" label="Descrição" className="sm:col-span-2" />
+            {/* Form Dinâmico (Criação ou Edição) */}
+            {(showNewProduct || editingProduct) && (
+              <form onSubmit={handleSaveProduct} className="mb-6 rounded-xl border border-blue-200 bg-blue-50/30 p-5 grid sm:grid-cols-2 gap-3 animate-fade-up">
+                <div className="sm:col-span-2 font-bold text-slate-900 text-sm border-b border-slate-200 pb-2">
+                  {editingProduct ? `Editando Produto: ${editingProduct.nome}` : "Cadastrar Novo Produto"}
+                </div>
+                <AField name="name" label="Nome" defaultValue={editingProduct?.nome || ""} required />
+                <AField name="price" label="Preço (R$)" type="number" step="0.01" defaultValue={editingProduct?.preco || ""} required />
+                <AField name="description" label="Descrição" defaultValue={editingProduct?.descricao || ""} className="sm:col-span-2" />
                 <label className="block">
                   <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Categoria</span>
-                  <select name="category" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white h-[38px]">
+                  <select name="category" defaultValue={editingProduct?.categoria || "paes"} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white h-[38px]">
                     <option value="paes">Pães</option>
                     <option value="doces">Doces</option>
                     <option value="bebidas">Bebidas</option>
                   </select>
                 </label>
-                <AField name="stock" label="Quantidade em estoque" type="number" defaultValue="10" />
-                <AField name="image" label="URL da foto" className="sm:col-span-2" />
+                <AField name="stock" label="Quantidade em estoque" type="number" defaultValue={editingProduct?.estoque || "10"} />
+                <AField name="image" label="URL da foto" defaultValue={editingProduct?.imagem || ""} className="sm:col-span-2" />
                 <div className="sm:col-span-2 flex justify-end gap-2">
-                  <button type="button" onClick={() => setShowNewProduct(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm">Cancelar</button>
-                  <button className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-semibold">Adicionar e ir para o Cardápio</button>
+                  <button 
+                    type="button" 
+                    onClick={() => { setShowNewProduct(false); setEditingProduct(null); }} 
+                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm"
+                  >
+                    Cancelar
+                  </button>
+                  <button className="rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-semibold hover:bg-blue-700">
+                    {editingProduct ? "Salvar Alterações" : "Adicionar e ir para o Cardápio"}
+                  </button>
                 </div>
               </form>
             )}
+
             <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
               <table className="min-w-full text-sm">
                 <thead className="bg-slate-50 text-left">
@@ -351,13 +379,24 @@ function Panel({ onLogout }: { onLogout: () => void }) {
                         )}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <button 
-                          onClick={() => handleDeleteProduct(p._id)}
-                          className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 transition-colors inline-flex items-center"
-                          title="Excluir Produto"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex items-center justify-center gap-1">
+                          {/* 🚀 NOVO: Botão de atualizar / editar dados completos */}
+                          <button 
+                            onClick={() => handleStartEdit(p)}
+                            className="text-blue-600 hover:text-blue-800 p-1.5 rounded-lg hover:bg-blue-50 transition-colors inline-flex items-center"
+                            title="Editar Produto"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          
+                          <button 
+                            onClick={() => handleDeleteProduct(p._id)}
+                            className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 transition-colors inline-flex items-center"
+                            title="Excluir Produto"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
