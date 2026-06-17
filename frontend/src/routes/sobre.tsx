@@ -23,7 +23,7 @@ function SobrePage() {
       <img src={heroImg} alt="Padaria tradicional" width={1536} height={1024} loading="lazy" className="mt-10 w-full rounded-2xl object-cover shadow-xl" />
       <div className="mt-10 space-y-6 text-lg leading-relaxed text-foreground/85 font-serif">
         <p>
-          <span className="float-left mr-2 font-serif text-6xl leading-[0.85] text-bread">T</span>Tudo começou em 1948, quando Dom Quixote e sua família decidiram
+          <span className="float-left mr-2 font-serif text-6xl leading-[0.85] text-bread">T</span>udo começou em 1948, quando Dom Quixote e sua família decidiram
            transformar a paixão pela panificação em uma forma de sustento e, ao mesmo tempo, levar alegria para a vizinhança.
            A cada fornada, os aromas dos pães recém-saídos do forno enchiam as ruas e aqueciam os corações de quem passava por perto.
         </p>
