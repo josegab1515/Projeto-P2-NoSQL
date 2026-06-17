@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { PRODUCTS, type Product } from "./products";
+import { type APIProduct } from "./products";
+import { apiService } from "../services/api"; // Importa o serviço que conecta ao FastAPI
 
 export interface CartItem {
   productId: string;
@@ -14,7 +15,7 @@ interface CartCtx {
   clear: () => void;
   count: number;
   subtotal: number;
-  detailed: { product: Product; qty: number; lineTotal: number }[];
+  detailed: { product: APIProduct; qty: number; lineTotal: number }[];
 }
 
 const Ctx = createContext<CartCtx | null>(null);
@@ -22,7 +23,9 @@ const KEY = "dq-cart-v1";
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [apiProducts, setApiProducts] = useState<APIProduct[]>([]);
 
+  // 1. Carrega o carrinho salvo no localStorage do cliente
   useEffect(() => {
     try {
       const raw = localStorage.getItem(KEY);
@@ -30,20 +33,48 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, []);
 
+  // 2. Busca a lista atualizada de produtos direto do MongoDB para bater os preços reais
   useEffect(() => {
-    try { localStorage.setItem(KEY, JSON.stringify(items)); } catch {}
+    async function fetchProducts() {
+      try {
+        const data = await apiService.listarProdutos();
+        setApiProducts(data);
+      } catch (err) {
+        console.error("Erro ao sincronizar produtos no carrinho:", err);
+      }
+    }
+    fetchProducts();
+  }, []); // Atualiza quando os itens mudam para garantir consistência de estoque/preço
+
+  // 3. Salva as alterações do carrinho no localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(items));
+    } catch {}
   }, [items]);
 
+  // 4. Constrói as informações detalhadas cruzando os IDs do carrinho com os dados do banco
   const value = useMemo<CartCtx>(() => {
     const detailed = items
-      .map((i) => {
-        const product = PRODUCTS.find((p) => p.id === i.productId);
+      .map((item) => {
+        // Encontra o produto no array que veio da API do MongoDB usando o _id
+        const product = apiProducts.find((p) => p._id === item.productId);
         if (!product) return null;
-        return { product, qty: i.qty, lineTotal: product.price * i.qty };
+        
+        // Converte o preço de string do banco para número para calcular o total da linha
+        const precoNum = Number(product.preco) || 0;
+        
+        return { 
+          product, 
+          qty: item.qty, 
+          lineTotal: precoNum * item.qty 
+        };
       })
-      .filter(Boolean) as { product: Product; qty: number; lineTotal: number }[];
-    const subtotal = detailed.reduce((s, d) => s + d.lineTotal, 0);
-    const count = items.reduce((s, i) => s + i.qty, 0);
+      .filter(Boolean) as { product: APIProduct; qty: number; lineTotal: number }[];
+
+    const subtotal = detailed.reduce((sum, d) => sum + d.lineTotal, 0);
+    const count = items.reduce((sum, i) => sum + i.qty, 0);
+
     return {
       items,
       add: (id) =>
@@ -64,7 +95,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       subtotal,
       detailed,
     };
-  }, [items]);
+  }, [items, apiProducts]); // Recalcula sempre que os itens do carrinho ou os produtos da API mudarem
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
