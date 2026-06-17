@@ -144,5 +144,14 @@ export const apiService = {
     }
 
     return response.json();
+  },
+  async atualizarFuncionario(id: string, funcionario: APIFuncionarioCreate): Promise<APIFuncionario> {
+    const response = await fetch(`${API_BASE_URL}/funcionarios/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(funcionario),
+    });
+    if (!response.ok) throw new Error('Erro ao atualizar funcionário');
+    return response.json();
   }
 };

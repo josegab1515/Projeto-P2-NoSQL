@@ -126,9 +126,13 @@ function Panel({ onLogout }: { onLogout: () => void }) {
   const [funcionarios, setFuncionarios] = useState<APIFuncionario[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Estados de controle para Produtos
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState<APIProduct | null>(null);
+
+  // Estados de controle para Funcionários
   const [showNewFunc, setShowNewFunc] = useState(false);
+  const [editingFunc, setEditingFunc] = useState<APIFuncionario | null>(null);
 
   const navigate = useNavigate();
 
@@ -180,7 +184,6 @@ function Panel({ onLogout }: { onLogout: () => void }) {
     }
   };
 
-  // 🚀 UNIFICADO: Gerencia tanto a criação quanto a edição completa do produto
   const handleSaveProduct = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -196,12 +199,10 @@ function Panel({ onLogout }: { onLogout: () => void }) {
 
     try {
       if (editingProduct) {
-        // Modo Edição
         const atualizado = await apiService.atualizarProduto(editingProduct._id, produtoPayload);
         setProducts((cur) => cur.map((p) => (p._id === editingProduct._id ? atualizado : p)));
         setEditingProduct(null);
       } else {
-        // Modo Criação
         await apiService.criarProduto(produtoPayload);
         setShowNewProduct(false);
         navigate({ to: "/cardapio" });
@@ -211,29 +212,41 @@ function Panel({ onLogout }: { onLogout: () => void }) {
     }
   };
 
-  const handleStartEdit = (produto: APIProduct) => {
-    setShowNewProduct(false); // Fecha o form de criação se estiver aberto
-    setEditingProduct(produto); // Define o produto ativo na edição
+  const handleStartEditProduct = (produto: APIProduct) => {
+    setShowNewProduct(false);
+    setEditingProduct(produto);
   };
 
-  const handleAddFuncionario = async (e: FormEvent<HTMLFormElement>) => {
+  // 🚀 UNIFICADO: Gerencia a criação e a edição de funcionário
+  const handleSaveFuncionario = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
 
-    const novoFuncionarioPayload: APIFuncionarioCreate = {
+    const funcionarioPayload: APIFuncionarioCreate = {
       usuario: String(fd.get("func_user") || ""),
       senha: String(fd.get("func_password") || ""),
       cargo: String(fd.get("func_role") || "Atendente"),
     };
 
     try {
-      const criado = await apiService.criarFuncionario(novoFuncionarioPayload);
-      setFuncionarios((cur) => [...cur, criado]);
-      setShowNewFunc(false);
+      if (editingFunc) {
+        const atualizado = await apiService.atualizarFuncionario(editingFunc._id, funcionarioPayload);
+        setFuncionarios((cur) => cur.map((f) => (f._id === editingFunc._id ? atualizado : f)));
+        setEditingFunc(null);
+      } else {
+        const criado = await apiService.criarFuncionario(funcionarioPayload);
+        setFuncionarios((cur) => [...cur, criado]);
+        setShowNewFunc(false);
+      }
       e.currentTarget.reset();
     } catch (err) {
-      alert("Erro ao cadastrar funcionário. Verifique os parâmetros da API.");
+      alert("Erro ao salvar dados do funcionário. Verifique os parâmetros da API.");
     }
+  };
+
+  const handleStartEditFunc = (func: APIFuncionario) => {
+    setShowNewFunc(false);
+    setEditingFunc(func);
   };
 
   const handleDeleteFuncionario = async (id: string) => {
@@ -299,7 +312,7 @@ function Panel({ onLogout }: { onLogout: () => void }) {
               </button>
             </div>
 
-            {/* Form Dinâmico (Criação ou Edição) */}
+            {/* Form de Produtos */}
             {(showNewProduct || editingProduct) && (
               <form onSubmit={handleSaveProduct} className="mb-6 rounded-xl border border-blue-200 bg-blue-50/30 p-5 grid sm:grid-cols-2 gap-3 animate-fade-up">
                 <div className="sm:col-span-2 font-bold text-slate-900 text-sm border-b border-slate-200 pb-2">
@@ -380,15 +393,13 @@ function Panel({ onLogout }: { onLogout: () => void }) {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          {/* 🚀 NOVO: Botão de atualizar / editar dados completos */}
                           <button 
-                            onClick={() => handleStartEdit(p)}
+                            onClick={() => handleStartEditProduct(p)}
                             className="text-blue-600 hover:text-blue-800 p-1.5 rounded-lg hover:bg-blue-50 transition-colors inline-flex items-center"
                             title="Editar Produto"
                           >
                             <Pencil size={16} />
                           </button>
-                          
                           <button 
                             onClick={() => handleDeleteProduct(p._id)}
                             className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 transition-colors inline-flex items-center"
@@ -415,18 +426,25 @@ function Panel({ onLogout }: { onLogout: () => void }) {
 
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-slate-900">Credenciais da Equipe (MongoDB)</h2>
-              <button onClick={() => setShowNewFunc((v) => !v)} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-semibold hover:bg-slate-800">
+              <button 
+                onClick={() => { setEditingFunc(null); setShowNewFunc((v) => !v); }} 
+                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-semibold hover:bg-slate-800"
+              >
                 <Plus size={14} /> Novo Acesso / Funcionário
               </button>
             </div>
 
-            {showNewFunc && (
-              <form onSubmit={handleAddFuncionario} className="mb-6 rounded-xl border border-slate-200 bg-white p-5 grid sm:grid-cols-3 gap-3 animate-fade-up">
-                <AField name="func_user" label="Usuário (Login)" placeholder="ex: joao.silva" required />
-                <AField name="func_password" label="Senha Inicial" type="password" required />
+            {/* Form Dinâmico de Funcionários (Criação ou Edição) */}
+            {(showNewFunc || editingFunc) && (
+              <form onSubmit={handleSaveFuncionario} className="mb-6 rounded-xl border border-amber-200 bg-amber-50/20 p-5 grid sm:grid-cols-3 gap-3 animate-fade-up">
+                <div className="sm:col-span-3 font-bold text-slate-900 text-sm border-b border-slate-200 pb-2">
+                  {editingFunc ? `Editando Acesso de: ${editingFunc.usuario}` : "Cadastrar Novo Funcionário"}
+                </div>
+                <AField name="func_user" label="Usuário (Login)" defaultValue={editingFunc?.usuario || ""} placeholder="ex: joao.silva" required />
+                <AField name="func_password" label={editingFunc ? "Nova Senha (ou repita)" : "Senha Inicial"} type="password" required />
                 <label className="block">
                   <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Cargo / Nível</span>
-                  <select name="func_role" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white h-[38px]">
+                  <select name="func_role" defaultValue={editingFunc?.cargo || "Atendente"} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white h-[38px]">
                     <option value="Padeiro">Padeiro</option>
                     <option value="Confeiteiro">Confeiteiro</option>
                     <option value="Atendente">Atendente / Caixa</option>
@@ -435,8 +453,16 @@ function Panel({ onLogout }: { onLogout: () => void }) {
                   </select>
                 </label>
                 <div className="sm:col-span-3 flex justify-end gap-2 mt-2">
-                  <button type="button" onClick={() => setShowNewFunc(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm">Cancelar</button>
-                  <button className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-semibold hover:bg-slate-800">Criar Usuário</button>
+                  <button 
+                    type="button" 
+                    onClick={() => { setShowNewFunc(false); setEditingFunc(null); }} 
+                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm"
+                  >
+                    Cancelar
+                  </button>
+                  <button className="rounded-lg bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 text-sm font-semibold">
+                    {editingFunc ? "Salvar Alterações" : "Criar Usuário"}
+                  </button>
                 </div>
               </form>
             )}
@@ -467,13 +493,23 @@ function Panel({ onLogout }: { onLogout: () => void }) {
                           </span>
                         </td>
                         <td className="px-6 py-3 text-center">
-                          <button 
-                            onClick={() => handleDeleteFuncionario(f._id)}
-                            className="text-red-500 hover:text-red-700 p-1 rounded transition-colors inline-flex items-center"
-                            title="Deletar Usuário"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          <div className="flex items-center justify-center gap-1">
+                            {/* 🚀 NOVO: Botão para editar dados do funcionário */}
+                            <button 
+                              onClick={() => handleStartEditFunc(f)}
+                              className="text-blue-600 hover:text-blue-800 p-1.5 rounded-lg hover:bg-blue-50 transition-colors inline-flex items-center"
+                              title="Editar Funcionário"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteFuncionario(f._id)}
+                              className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 transition-colors inline-flex items-center"
+                              title="Deletar Usuário"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
