@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { LogOut, Plus, Wheat, ShoppingBag, Users, Trash2 } from "lucide-react";
+import { LogOut, Plus, Wheat, ShoppingBag, Users, Trash2, Pencil } from "lucide-react";
 import { formatBRL, type Category } from "@/lib/products";
 import { apiService, type APIProduct, type APIProductCreate, type APIFuncionario, type APIFuncionarioCreate } from "../services/api";
 
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-export function AdminPage() {
+function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -57,7 +57,6 @@ function Login({ onOk }: { onOk: () => void }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🚀 CORRIGIDO: Agora valida de verdade contra a API e o MongoDB
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
@@ -68,11 +67,9 @@ function Login({ onOk }: { onOk: () => void }) {
     const passVal = String(fd.get("pass") || "");
 
     try {
-      // Faz o POST dinâmico para o back-end buscando as credenciais
       await apiService.login(userVal, passVal);
       onOk();
     } catch (err: any) {
-      // Trata mensagens de erro que vêm do FastAPI (como 'Usuário ou senha incorretos')
       setError(err.message || "Erro ao tentar realizar o login.");
     } finally {
       setLoading(false);
@@ -129,8 +126,13 @@ function Panel({ onLogout }: { onLogout: () => void }) {
   const [funcionarios, setFuncionarios] = useState<APIFuncionario[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Estados de controle para Produtos
   const [showNewProduct, setShowNewProduct] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<APIProduct | null>(null);
+
+  // Estados de controle para Funcionários
   const [showNewFunc, setShowNewFunc] = useState(false);
+  const [editingFunc, setEditingFunc] = useState<APIFuncionario | null>(null);
 
   const navigate = useNavigate();
 
@@ -182,11 +184,11 @@ function Panel({ onLogout }: { onLogout: () => void }) {
     }
   };
 
-  const handleAddProduct = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSaveProduct = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
 
-    const novoProdutoPayload: APIProductCreate = {
+    const produtoPayload: APIProductCreate = {
       nome: String(fd.get("name") || ""),
       preco: String(fd.get("price") || "0"),
       descricao: String(fd.get("description") || ""),
@@ -196,32 +198,55 @@ function Panel({ onLogout }: { onLogout: () => void }) {
     };
 
     try {
-      await apiService.criarProduto(novoProdutoPayload);
-      setShowNewProduct(false);
-      navigate({ to: "/cardapio" });
+      if (editingProduct) {
+        const atualizado = await apiService.atualizarProduto(editingProduct._id, produtoPayload);
+        setProducts((cur) => cur.map((p) => (p._id === editingProduct._id ? atualizado : p)));
+        setEditingProduct(null);
+      } else {
+        await apiService.criarProduto(produtoPayload);
+        setShowNewProduct(false);
+        navigate({ to: "/cardapio" });
+      }
     } catch (err) {
-      alert("Não foi possível salvar o produto.");
+      alert("Não foi possível salvar as alterações do produto.");
     }
   };
 
-  const handleAddFuncionario = async (e: FormEvent<HTMLFormElement>) => {
+  const handleStartEditProduct = (produto: APIProduct) => {
+    setShowNewProduct(false);
+    setEditingProduct(produto);
+  };
+
+  // 🚀 UNIFICADO: Gerencia a criação e a edição de funcionário
+  const handleSaveFuncionario = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
 
-    const novoFuncionarioPayload: APIFuncionarioCreate = {
+    const funcionarioPayload: APIFuncionarioCreate = {
       usuario: String(fd.get("func_user") || ""),
       senha: String(fd.get("func_password") || ""),
       cargo: String(fd.get("func_role") || "Atendente"),
     };
 
     try {
-      const criado = await apiService.criarFuncionario(novoFuncionarioPayload);
-      setFuncionarios((cur) => [...cur, criado]);
-      setShowNewFunc(false);
+      if (editingFunc) {
+        const atualizado = await apiService.atualizarFuncionario(editingFunc._id, funcionarioPayload);
+        setFuncionarios((cur) => cur.map((f) => (f._id === editingFunc._id ? atualizado : f)));
+        setEditingFunc(null);
+      } else {
+        const criado = await apiService.criarFuncionario(funcionarioPayload);
+        setFuncionarios((cur) => [...cur, criado]);
+        setShowNewFunc(false);
+      }
       e.currentTarget.reset();
     } catch (err) {
-      alert("Erro ao cadastrar funcionário. Verifique os parâmetros da API.");
+      alert("Erro ao salvar dados do funcionário. Verifique os parâmetros da API.");
     }
+  };
+
+  const handleStartEditFunc = (func: APIFuncionario) => {
+    setShowNewFunc(false);
+    setEditingFunc(func);
   };
 
   const handleDeleteFuncionario = async (id: string) => {
@@ -279,32 +304,48 @@ function Panel({ onLogout }: { onLogout: () => void }) {
 
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-slate-900">Catálogo de Cardápio</h2>
-              <button onClick={() => setShowNewProduct((v) => !v)} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-semibold hover:bg-slate-800">
+              <button 
+                onClick={() => { setEditingProduct(null); setShowNewProduct((v) => !v); }} 
+                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-semibold hover:bg-slate-800"
+              >
                 <Plus size={14} /> Novo produto
               </button>
             </div>
 
-            {showNewProduct && (
-              <form onSubmit={handleAddProduct} className="mb-6 rounded-xl border border-slate-200 bg-white p-5 grid sm:grid-cols-2 gap-3 animate-fade-up">
-                <AField name="name" label="Nome" required />
-                <AField name="price" label="Preço (R$)" type="number" step="0.01" required />
-                <AField name="description" label="Descrição" className="sm:col-span-2" />
+            {/* Form de Produtos */}
+            {(showNewProduct || editingProduct) && (
+              <form onSubmit={handleSaveProduct} className="mb-6 rounded-xl border border-blue-200 bg-blue-50/30 p-5 grid sm:grid-cols-2 gap-3 animate-fade-up">
+                <div className="sm:col-span-2 font-bold text-slate-900 text-sm border-b border-slate-200 pb-2">
+                  {editingProduct ? `Editando Produto: ${editingProduct.nome}` : "Cadastrar Novo Produto"}
+                </div>
+                <AField name="name" label="Nome" defaultValue={editingProduct?.nome || ""} required />
+                <AField name="price" label="Preço (R$)" type="number" step="0.01" defaultValue={editingProduct?.preco || ""} required />
+                <AField name="description" label="Descrição" defaultValue={editingProduct?.descricao || ""} className="sm:col-span-2" />
                 <label className="block">
                   <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Categoria</span>
-                  <select name="category" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white h-[38px]">
+                  <select name="category" defaultValue={editingProduct?.categoria || "paes"} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white h-[38px]">
                     <option value="paes">Pães</option>
                     <option value="doces">Doces</option>
                     <option value="bebidas">Bebidas</option>
                   </select>
                 </label>
-                <AField name="stock" label="Quantidade em estoque" type="number" defaultValue="10" />
-                <AField name="image" label="URL da foto" className="sm:col-span-2" />
+                <AField name="stock" label="Quantidade em estoque" type="number" defaultValue={editingProduct?.estoque || "10"} />
+                <AField name="image" label="URL da foto" defaultValue={editingProduct?.imagem || ""} className="sm:col-span-2" />
                 <div className="sm:col-span-2 flex justify-end gap-2">
-                  <button type="button" onClick={() => setShowNewProduct(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm">Cancelar</button>
-                  <button className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-semibold">Adicionar e ir para o Cardápio</button>
+                  <button 
+                    type="button" 
+                    onClick={() => { setShowNewProduct(false); setEditingProduct(null); }} 
+                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm"
+                  >
+                    Cancelar
+                  </button>
+                  <button className="rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-semibold hover:bg-blue-700">
+                    {editingProduct ? "Salvar Alterações" : "Adicionar e ir para o Cardápio"}
+                  </button>
                 </div>
               </form>
             )}
+
             <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
               <table className="min-w-full text-sm">
                 <thead className="bg-slate-50 text-left">
@@ -351,13 +392,22 @@ function Panel({ onLogout }: { onLogout: () => void }) {
                         )}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <button 
-                          onClick={() => handleDeleteProduct(p._id)}
-                          className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 transition-colors inline-flex items-center"
-                          title="Excluir Produto"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex items-center justify-center gap-1">
+                          <button 
+                            onClick={() => handleStartEditProduct(p)}
+                            className="text-blue-600 hover:text-blue-800 p-1.5 rounded-lg hover:bg-blue-50 transition-colors inline-flex items-center"
+                            title="Editar Produto"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteProduct(p._id)}
+                            className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 transition-colors inline-flex items-center"
+                            title="Excluir Produto"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -376,18 +426,25 @@ function Panel({ onLogout }: { onLogout: () => void }) {
 
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-slate-900">Credenciais da Equipe (MongoDB)</h2>
-              <button onClick={() => setShowNewFunc((v) => !v)} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-semibold hover:bg-slate-800">
+              <button 
+                onClick={() => { setEditingFunc(null); setShowNewFunc((v) => !v); }} 
+                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-semibold hover:bg-slate-800"
+              >
                 <Plus size={14} /> Novo Acesso / Funcionário
               </button>
             </div>
 
-            {showNewFunc && (
-              <form onSubmit={handleAddFuncionario} className="mb-6 rounded-xl border border-slate-200 bg-white p-5 grid sm:grid-cols-3 gap-3 animate-fade-up">
-                <AField name="func_user" label="Usuário (Login)" placeholder="ex: joao.silva" required />
-                <AField name="func_password" label="Senha Inicial" type="password" required />
+            {/* Form Dinâmico de Funcionários (Criação ou Edição) */}
+            {(showNewFunc || editingFunc) && (
+              <form onSubmit={handleSaveFuncionario} className="mb-6 rounded-xl border border-amber-200 bg-amber-50/20 p-5 grid sm:grid-cols-3 gap-3 animate-fade-up">
+                <div className="sm:col-span-3 font-bold text-slate-900 text-sm border-b border-slate-200 pb-2">
+                  {editingFunc ? `Editando Acesso de: ${editingFunc.usuario}` : "Cadastrar Novo Funcionário"}
+                </div>
+                <AField name="func_user" label="Usuário (Login)" defaultValue={editingFunc?.usuario || ""} placeholder="ex: joao.silva" required />
+                <AField name="func_password" label={editingFunc ? "Nova Senha (ou repita)" : "Senha Inicial"} type="password" required />
                 <label className="block">
                   <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Cargo / Nível</span>
-                  <select name="func_role" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white h-[38px]">
+                  <select name="func_role" defaultValue={editingFunc?.cargo || "Atendente"} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white h-[38px]">
                     <option value="Padeiro">Padeiro</option>
                     <option value="Confeiteiro">Confeiteiro</option>
                     <option value="Atendente">Atendente / Caixa</option>
@@ -396,8 +453,16 @@ function Panel({ onLogout }: { onLogout: () => void }) {
                   </select>
                 </label>
                 <div className="sm:col-span-3 flex justify-end gap-2 mt-2">
-                  <button type="button" onClick={() => setShowNewFunc(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm">Cancelar</button>
-                  <button className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm font-semibold hover:bg-slate-800">Criar Usuário</button>
+                  <button 
+                    type="button" 
+                    onClick={() => { setShowNewFunc(false); setEditingFunc(null); }} 
+                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm"
+                  >
+                    Cancelar
+                  </button>
+                  <button className="rounded-lg bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 text-sm font-semibold">
+                    {editingFunc ? "Salvar Alterações" : "Criar Usuário"}
+                  </button>
                 </div>
               </form>
             )}
@@ -428,13 +493,23 @@ function Panel({ onLogout }: { onLogout: () => void }) {
                           </span>
                         </td>
                         <td className="px-6 py-3 text-center">
-                          <button 
-                            onClick={() => handleDeleteFuncionario(f._id)}
-                            className="text-red-500 hover:text-red-700 p-1 rounded transition-colors inline-flex items-center"
-                            title="Deletar Usuário"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          <div className="flex items-center justify-center gap-1">
+                            {/* 🚀 NOVO: Botão para editar dados do funcionário */}
+                            <button 
+                              onClick={() => handleStartEditFunc(f)}
+                              className="text-blue-600 hover:text-blue-800 p-1.5 rounded-lg hover:bg-blue-50 transition-colors inline-flex items-center"
+                              title="Editar Funcionário"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteFuncionario(f._id)}
+                              className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 transition-colors inline-flex items-center"
+                              title="Deletar Usuário"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))

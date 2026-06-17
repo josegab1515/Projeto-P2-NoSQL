@@ -44,7 +44,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
     }
     fetchProducts();
-  }, [items]); // Atualiza quando os itens mudam para garantir consistência de estoque/preço
+  }, []); // Atualiza quando os itens mudam para garantir consistência de estoque/preço
 
   // 3. Salva as alterações do carrinho no localStorage
   useEffect(() => {
