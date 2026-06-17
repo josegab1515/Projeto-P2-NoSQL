@@ -56,9 +56,8 @@ function CardapioPage() {
           Fornada de hoje
         </div>
         <h1 className="mt-4 font-serif text-4xl md:text-5xl font-bold text-bread">
-          O Que Temos De Melhor Hoje
+          Nosso Cardápio
         </h1>
-        <p className="mt-3 text-foreground/70">Tudo assado entre as 4h e as 11h da manhã. Quando acaba, acabou.</p>
       </div>
 
       {/* Filtros dinâmicos baseados no CATEGORIES do lib/products */}

@@ -1,14 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import heroImg from "@/assets/hero-padaria.jpg";
+import heroImg from "@/assets/hero-padaria.png";
 import { ArrowRight, Wheat, Clock, Heart } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Padaria Dom Quixote · Pão artesanal de fermentação natural" },
-      { name: "description", content: "Há três gerações fazendo pão à moda antiga: 36 horas de fermentação, farinha de moinho de pedra e o forno a lenha aceso desde as quatro da manhã." },
+      { name: "description", content: "Há três gerações fazendo pão com muito carinho " },
       { property: "og:title", content: "Padaria Dom Quixote" },
-      { property: "og:description", content: "Pão de fermentação natural, doces de receita antiga e cafés artesanais." },
+      { property: "og:description", content: "Pão de fermentação natural, doces de receita familiar e cafés artesanais." },
     ],
   }),
   component: HomePage,
@@ -24,14 +24,14 @@ function HomePage() {
             <div className="absolute -inset-4 paper-texture rounded-3xl -z-10 rotate-[-1.5deg]" />
             <img
               src={heroImg}
-              alt="Família de padeiros sovando massa no forno tradicional"
+              alt="Família de padeiros sovando massa de pão"
               width={1536}
               height={1024}
               className="w-full rounded-2xl object-cover shadow-2xl"
             />
             <div className="absolute -bottom-5 -right-5 hidden md:flex items-center gap-2 rounded-full bg-cream border border-border px-5 py-3 shadow-lg">
               <Wheat size={18} className="text-bread" />
-              <span className="font-serif text-sm font-semibold text-bread">Desde 1987</span>
+              <span className="font-serif text-sm font-semibold text-bread">Desde 1948</span>
             </div>
           </div>
 
@@ -41,18 +41,17 @@ function HomePage() {
               Nossa História
             </div>
             <h1 className="mt-5 font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-bread leading-[1.05]">
-              O pão que <em className="not-italic text-primary">demora</em> é o pão que alimenta.
+              O pão <em className="not-italic text-primary">nosso</em> de cada dia.
             </h1>
             <p className="mt-6 text-base md:text-lg leading-relaxed text-foreground/80">
-              Em 1987, Seu Quixote acendeu o forno a lenha pela primeira vez numa esquina pacata da Vila do Forno.
-              Três gerações depois, ainda acendemos antes do sol nascer. Nosso fermento — batizado de
-              <strong className="text-bread"> Sancho</strong> — tem 38 anos e segue alimentando cada fornada
-              com farinha de moinho de pedra, sal marinho e o tempo que o pão pede.
+               Desde 1948, levamos sabor, tradição e carinho para a mesa de nossos clientes. Fundada por Dom Quixote e sua família, 
+               nossa padaria atravessou gerações mantendo a qualidade dos ingredientes e o 
+              <strong className="text-bread"> amor</strong> em cada receita. Aqui, cada pão quentinho é preparado para transformar momentos simples em lembranças especiais.
             </p>
 
             <div className="mt-8 grid grid-cols-3 gap-4 text-center">
               <Stat icon={<Clock size={18} />} value="36h" label="de fermentação" />
-              <Stat icon={<Wheat size={18} />} value="100%" label="moinho de pedra" />
+              <Stat icon={<Wheat size={18} />} value="100%" label="natural" />
               <Stat icon={<Heart size={18} />} value="3" label="gerações" />
             </div>
 
@@ -60,7 +59,7 @@ function HomePage() {
               to="/cardapio"
               className="mt-10 inline-flex items-center gap-3 rounded-2xl btn-bakery px-7 py-4 text-sm font-bold uppercase tracking-[0.15em]"
             >
-              Ver Cardápio Delicioso
+              Nosso Cardápio
               <ArrowRight size={18} />
             </Link>
           </div>
@@ -71,9 +70,9 @@ function HomePage() {
       <section className="paper-texture border-y border-border/50">
         <div className="mx-auto max-w-7xl px-5 py-12 grid gap-8 md:grid-cols-3 text-center">
           {[
-            { t: "Farinha viva", d: "Moída em pedra a cada semana, direto do produtor da Serra da Mantiqueira." },
-            { t: "Entrega quentinha", d: "Saiu do forno, partiu pra você. Em até 60 minutos na sua porta." },
-            { t: "Receita de família", d: "O caderno da Dona Aurora ainda dita o ponto da massa." },
+            { t: "Delícia caseira", d: "Muito carinho e história." },
+            { t: "Entrega quentinha", d: "Saiu do forno, partiu pra você." },
+            { t: "Receita de família", d: "O caderno de Dom Quixote ainda dita o ponto da massa." },
           ].map((b) => (
             <div key={b.t}>
               <h3 className="font-serif text-xl font-bold text-bread">{b.t}</h3>

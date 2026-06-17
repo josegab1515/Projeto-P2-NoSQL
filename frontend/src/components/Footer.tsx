@@ -7,28 +7,28 @@ export function Footer() {
         <div>
           <div className="font-serif text-2xl">Padaria Dom Quixote</div>
           <p className="mt-3 text-sm text-cream/75 max-w-xs">
-            Fermentação natural, ingredientes locais e o tempo que o pão pede. Feito à mão, todo dia, desde 1987.
+            Fermentação natural, ingredientes locais e o tempo que o pão pede. Feito à mão, todo dia, desde 1948.
           </p>
         </div>
         <div className="text-sm">
           <div className="font-serif text-lg mb-3">Visite</div>
           <p className="text-cream/75 leading-relaxed">
-            Rua das Espigas, 142<br />
-            Vila do Forno · São Paulo<br />
+            Rua Shunji Nishimura, 605<br />
+            Distrito Industrial · Pompeia<br />
             Ter–Dom · 7h às 19h
           </p>
         </div>
         <div className="text-sm">
           <div className="font-serif text-lg mb-3">Atendimento</div>
           <p className="text-cream/75">contato@domquixote.pao</p>
-          <p className="text-cream/75">(11) 4002-8922</p>
+          <p className="text-cream/75">(14) 3452-0000</p>
           <Link to="/admin" className="mt-6 inline-block text-[11px] uppercase tracking-[0.2em] text-cream/50 hover:text-cream transition-colors">
             Acesso Funcionários
           </Link>
         </div>
       </div>
       <div className="border-t border-cream/10 py-4 text-center text-[11px] uppercase tracking-[0.2em] text-cream/40">
-        © {new Date().getFullYear()} · Pão que alimenta corpo e história
+        © {new Date().getFullYear()} · Pão com muito amor e história
       </div>
     </footer>
   );
