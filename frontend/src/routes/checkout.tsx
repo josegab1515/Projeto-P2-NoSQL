@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { CreditCard, QrCode, Banknote, X, Lock } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { formatBRL } from "@/lib/products";
@@ -33,9 +33,23 @@ function CheckoutPage() {
   const [bairro, setBairro] = useState("");
   const [complemento, setComplemento] = useState("");
 
-  // Recupera as informações financeiras e itens calculados no carrinho
-  const resumoSalvo = localStorage.getItem("dom_quixote_checkout_resumo");
-  const checkoutData = resumoSalvo ? JSON.parse(resumoSalvo) : { itens: [], total: 0 };
+  // Estado seguro para evitar falhas de localStorage no Server-Side Rendering (SSR)
+  const [checkoutData, setCheckoutData] = useState<{ itens: any[]; total: number }>({ itens: [], total: 0 });
+
+  // Busca do localStorage apenas após o componente ser montado no navegador
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const resumoSalvo = localStorage.getItem("dom_quixote_checkout_resumo");
+      if (resumoSalvo) {
+        try {
+          setCheckoutData(JSON.parse(resumoSalvo));
+        } catch (e) {
+          console.error("Erro ao converter resumo do checkout:", e);
+        }
+      }
+    }
+  }, []);
+
   const total = checkoutData.total;
 
   if (!detailed.length) {
@@ -60,19 +74,28 @@ function CheckoutPage() {
         email,
         telefone,
         cep,
-        endereco, // mapeado para "Rua e número" do seu input
+        endereco,
         bairro,
         complemento: complemento || "Nenhum",
       });
 
-      // 2. Monta o Payload do Pedido com o ID do cliente retornado pelo backend
+      // 2. Monta o Payload adaptando os campos "produto_id" -> "produto" esperado pelo Pydantic
+      // 2. Monta o Payload adaptando os campos exatamente como o Pydantic espera agora
       const payloadPedido = {
-        cliente_id: clienteCriado._id, // O ID real gerado pelo Mongo
-        itens: checkoutData.itens,     // Array estruturado contendo { produto_id, quantidade, preco_unitario }
-        total: total,
-        pagamento: method,             // "credito" | "dinheiro"
+        cliente_id: String(clienteCriado._id),
+        
+        itens: checkoutData.itens.map((item: any) => ({
+          produto_id: String(item.produto_id), // <--- CORRIGIDO: Agora bate com o "produto_id: str" do backend
+          quantidade: Math.floor(Number(item.quantidade)),
+          preco_unitario: Number(Number(item.preco_unitario).toFixed(2)),
+        })),     
+        
+        total: Number(Number(total).toFixed(2)), // Proteção contra dízimas do JS
+        pagamento: String(method),             
         status: "pendente",
       };
+
+      console.log("PAYLOAD FINAL ENVIADO PARA O BACKEND:", JSON.stringify(payloadPedido, null, 2));
 
       // 3. Envia o Pedido para a API
       const pedidoConfirmado = await apiService.criarPedido(payloadPedido);
